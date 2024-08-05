@@ -57,17 +57,19 @@ func newConfig() *Config {
 	} else if checkPath("feh") {
 		backend = "feh"
 	} else {
-		log.Fatal("installed wallpaper utility not found in path.\n please install swaybg or swww for wayland and feh for Xorg.")
+		log.Panic("installed wallpaper utility not found in path.\n please install swaybg or swww for wayland and feh for Xorg.")
 	}
+
 	return &Config{
 		Backend:       backend,
 		WaitDelay:     1,
 		AcceptFormats: []string{".png", ".jpg", ".jpeg"},
-		WallpaperDirs: []string{"/home/omid/wallpapers"},
+		WallpaperDirs: []string{fmt.Sprintf("%s/wallpapers/", os.Getenv("HOME"))},
 	}
 }
 
 func (manager *Manager) listImages(path string) {
+	manager.Logger.Printf("scanning %s ", path)
 	filepath.Walk(path, func(wPath string, info os.FileInfo, err error) error {
 		// Walk the given dir
 		// without printing out.
@@ -83,9 +85,10 @@ func (manager *Manager) listImages(path string) {
 		// cehck file extionsion and append to images slcide
 		if wPath != path {
 			// Check file extension and append to images slice if it matches accepted formats
-			for _, format := range manager.config.AcceptFormats {
+			for _, format := range manager.Config.AcceptFormats {
 				if strings.HasSuffix(strings.ToLower(info.Name()), strings.ToLower(format)) {
-					manager.images = append(manager.images, wPath)
+					manager.Images = append(manager.Images, wPath)
+					manager.Logger.Println("finded:", wPath)
 					break
 				}
 			}
@@ -96,33 +99,34 @@ func (manager *Manager) listImages(path string) {
 }
 
 func (manager *Manager) changeBg() error {
-	if len(manager.images) == 0 {
+	if len(manager.Images) == 0 {
 		return errors.New("no image found")
 	}
 
 	for {
-		img := manager.images[rand.Intn(len(manager.images))]
-		fmt.Println("current bg: ", img)
+		img := manager.Images[rand.Intn(len(manager.Images))]
+		fmt.Println("current bg:", img)
+		manager.Logger.Println("current bg:", img)
 		go func() {
-			switch manager.config.Backend {
+			switch manager.Config.Backend {
 			case "feh":
 				call(true, "killall", "feh")
 				if err := call(false, "feh", "--bg-scale", img); err != nil {
-					log.Fatal(err)
+					manager.Logger.Println(err)
 				}
 			case "swaybg":
 				call(true, "killall", "swaybg")
 				if err := call(false, "swaybg", "-i", img, "-m", "fill"); err != nil {
-					fmt.Println(err)
+					manager.Logger.Println(err)
 				}
 
 			case "swww":
 				call(false, "swww-daemon")
 				if err := call(false, "swww", "img", img); err != nil {
-					log.Fatal(err)
+					manager.Logger.Println(err)
 				}
 			}
 		}()
-		time.Sleep(time.Minute * time.Duration(manager.config.WaitDelay))
+		time.Sleep(time.Minute * time.Duration(manager.Config.WaitDelay))
 	}
 }

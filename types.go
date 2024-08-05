@@ -1,5 +1,7 @@
 package main
 
+import "log"
+
 type Config struct {
 	Backend       string   `json:"backend"`
 	WaitDelay     int      `json:"wait_delay"`
@@ -8,6 +10,7 @@ type Config struct {
 }
 
 type Manager struct {
-	config *Config
-	images []string
+	Config *Config
+	Images []string
+	Logger *log.Logger
 }
