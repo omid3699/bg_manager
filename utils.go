@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -57,7 +56,7 @@ func newConfig() *Config {
 	} else if checkPath("feh") {
 		backend = "feh"
 	} else {
-		log.Panic("installed wallpaper utility not found in path.\n please install swaybg or swww for wayland and feh for Xorg.")
+		Logger.Panic("installed wallpaper utility not found in path.\n please install swaybg or swww for wayland and feh for Xorg.")
 	}
 
 	return &Config{
@@ -69,7 +68,7 @@ func newConfig() *Config {
 }
 
 func (manager *Manager) listImages(path string) {
-	manager.Logger.Printf("scanning %s ", path)
+	Logger.Printf("scanning %s ", path)
 	filepath.Walk(path, func(wPath string, info os.FileInfo, err error) error {
 		// Walk the given dir
 		// without printing out.
@@ -88,7 +87,7 @@ func (manager *Manager) listImages(path string) {
 			for _, format := range manager.Config.AcceptFormats {
 				if strings.HasSuffix(strings.ToLower(info.Name()), strings.ToLower(format)) {
 					manager.Images = append(manager.Images, wPath)
-					manager.Logger.Println("finded:", wPath)
+					Logger.Println("finded:", wPath)
 					break
 				}
 			}
@@ -106,24 +105,24 @@ func (manager *Manager) changeBg() error {
 	for {
 		img := manager.Images[rand.Intn(len(manager.Images))]
 		fmt.Println("current bg:", img)
-		manager.Logger.Println("current bg:", img)
+		Logger.Println("current bg:", img)
 		go func() {
 			switch manager.Config.Backend {
 			case "feh":
 				call(true, "killall", "feh")
 				if err := call(false, "feh", "--bg-scale", img); err != nil {
-					manager.Logger.Println(err)
+					Logger.Println(err)
 				}
 			case "swaybg":
 				call(true, "killall", "swaybg")
 				if err := call(false, "swaybg", "-i", img, "-m", "fill"); err != nil {
-					manager.Logger.Println(err)
+					Logger.Println(err)
 				}
 
 			case "swww":
 				call(false, "swww-daemon")
 				if err := call(false, "swww", "img", img); err != nil {
-					manager.Logger.Println(err)
+					Logger.Println(err)
 				}
 			}
 		}()
