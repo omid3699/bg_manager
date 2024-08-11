@@ -6,6 +6,7 @@ import (
 	"path"
 )
 
+// Logger is a log.Logger instance
 var Logger *log.Logger
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 	defer f.Close()
 
 	manger := &Manager{
-		Config: newConfig(),
+		Config: LoadConfig(),
 		Images: []string{},
 	}
 
